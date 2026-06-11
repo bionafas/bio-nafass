@@ -3302,7 +3302,7 @@
               <span>منتج طبيعي 100٪ بدون مواد حافظة أو إضافات</span>
             </div>
           </div>
-        </div>
+        </div> 
       </div>
 
       <!-- RIGHT: FORM CARD -->
@@ -3312,8 +3312,9 @@
             <div class="form-title">🛒 تأكيد الطلب</div>
             <div class="form-sub">أدخل بياناتك وسنتصل بك قريباً لتأكيد التفاصيل</div>
 
-            <form id="order-form" action="https://formspree.io/f/xaqkklpn" method="POST" novalidate
-              onsubmit="doOrder(event)">
+            <form id="order-form"
+              action="https://script.google.com/macros/s/AKfycbzwOHzC2nuT5_fOuOt2lF-e4U_KJthfnfsXuuMgLhEOit9ESZjGBfvAIT6xoTe16GKGjA/exec"
+              method="POST" novalidate onsubmit="doOrder(event)">
 
               <!-- Hidden fields (filled by JS) -->
               <input type="hidden" name="_subject" value="🛒 طلب جديد — BIO NAFAS">
@@ -3828,14 +3829,19 @@
         return;
       }
 
-      // Real Formspree submission
+      // Real backend submission
+      const formData = new FormData(document.getElementById('order-form'));
       fetch(formAction, {
         method: 'POST',
-        body: new FormData(document.getElementById('order-form')),
-        headers: { 'Accept': 'application/json' },
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(formData),
       })
-        .then(r => showSuccess())
-        .catch(() => showSuccess());
+        .then(() => showSuccess())
+        .catch(err => {
+          console.error('Error submitting order:', err);
+          showSuccess();
+        });
     }
 
     // ── TOGGLE SPECIAL OFFERS ──
