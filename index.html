@@ -1998,6 +1998,12 @@
       -webkit-appearance: none;
     }
 
+    .field select {
+      background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat left 16px center;
+      background-size: 16px;
+      padding-left: 40px;
+    }
+
     .field textarea {
       resize: vertical;
       min-height: 72px;
@@ -2008,8 +2014,12 @@
     .field textarea:focus {
       outline: none;
       border-color: var(--emerald-400);
-      background: var(--white);
+      background-color: var(--white);
       box-shadow: 0 0 0 3px rgba(61, 156, 20, .1);
+    }
+
+    .field select:focus {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232d7a0e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     }
 
     .field input.valid {
@@ -2077,6 +2087,10 @@
       grid-template-columns: 1fr 1fr;
       gap: 12px;
       margin-top: 8px;
+    }
+
+    .del-grid.single-opt {
+      grid-template-columns: 1fr;
     }
 
     .del-opt {
@@ -3302,7 +3316,7 @@
               <span>منتج طبيعي 100٪ بدون مواد حافظة أو إضافات</span>
             </div>
           </div>
-        </div> 
+        </div>
       </div>
 
       <!-- RIGHT: FORM CARD -->
@@ -3354,6 +3368,14 @@
                 <label for="f-wilaya">الولاية *</label>
                 <select id="f-wilaya" name="الولاية_select" required onchange="onWilaya()">
                   <option value="">-- اختر ولايتك --</option>
+                </select>
+              </div>
+
+              <!-- SETIF AREA SELECT (Conditional) -->
+              <div class="field" id="setif-area-wrap" style="display:none;margin-top:14px">
+                <label for="f-setif-area">بلدية التوصيل في ولاية سطيف *</label>
+                <select id="f-setif-area" name="بلدية_التوصيل_بسطيف" onchange="onSetifAreaChange()">
+                  <!-- Dynamically populated -->
                 </select>
               </div>
 
@@ -3605,7 +3627,7 @@
       { n: "الجزائر", h: 600, o: 450, d: "J/J+1" },
       { n: "الجلفة", h: 900, o: 500, d: "J/J+1" },
       { n: "جيجل", h: 700, o: 450, d: "J/J+1" },
-      { n: "سطيف", h: 450, o: 300, d: "J/J+1" },
+      { n: "سطيف", h: 200, o: 0, d: "J/J+1" },
       { n: "سعيدة", h: 800, o: 450, d: "J/J+1" },
       { n: "سكيكدة", h: 750, o: 450, d: "J/J+1" },
       { n: "سيدي بلعباس", h: 850, o: 450, d: "J/J+1" },
@@ -3648,9 +3670,92 @@
 
     let curW = null, curDel = null, delCost = 0;
 
+    function roundTo50(val) {
+      return Math.round(val / 50) * 50;
+    }
+
     function fmt(n) {
       return n.toLocaleString('ar-DZ') + ' دج';
     }
+
+    const SETIF_COMMUNES = [
+      { name: "سطيف", dist: 0 },
+      { name: "عين أرنات", dist: 7 },
+      { name: "أوريسيا", dist: 13 },
+      { name: "مزلوق", dist: 14 },
+      { name: "أولاد صابر", dist: 15 },
+      { name: "قجال", dist: 16 },
+      { name: "عين عباسة", dist: 20 },
+      { name: "عين الكبيرة", dist: 27 },
+      { name: "العلمة", dist: 27 },
+      { name: "عموشة", dist: 28 },
+      { name: "أولاد عدوان", dist: 28 },
+      { name: "بني فودة", dist: 29 },
+      { name: "قلال", dist: 30 },
+      { name: "عين الحجر", dist: 32 },
+      { name: "بئر حدادة", dist: 35 },
+      { name: "بازر سكرة", dist: 35 },
+      { name: "التلة", dist: 35 },
+      { name: "تاشودة", dist: 35 },
+      { name: "عين ولمان", dist: 36 },
+      { name: "عين الروى", dist: 37 },
+      { name: "البلاعة", dist: 37 },
+      { name: "الدهامشة", dist: 38 },
+      { name: "تلايفسن", dist: 38 },
+      { name: "قصر الأبطال", dist: 40 },
+      { name: "قلتة زرقاء", dist: 40 },
+      { name: "تيزي نبيشار", dist: 40 },
+      { name: "بوقاعة", dist: 42 },
+      { name: "حمام السخنة", dist: 42 },
+      { name: "بئر العرش", dist: 44 },
+      { name: "تية", dist: 45 },
+      { name: "معاوية", dist: 45 },
+      { name: "أم العجول", dist: 45 },
+      { name: "بني عزيز", dist: 47 },
+      { name: "ماوكلان", dist: 48 },
+      { name: "ذراع قبيلة", dist: 48 },
+      { name: "عين أزل", dist: 50 },
+      { name: "حمام قرقور", dist: 52 },
+      { name: "حربيل", dist: 52 },
+      { name: "عين السبت", dist: 52 },
+      { name: "الحامة", dist: 55 },
+      { name: "بابور", dist: 55 },
+      { name: "سرج الغول", dist: 56 },
+      { name: "أولاد سي أحمد", dist: 56 },
+      { name: "الرصفة", dist: 58 },
+      { name: "صالح باي", dist: 60 },
+      { name: "بوطالب", dist: 62 },
+      { name: "قنزات", dist: 64 },
+      { name: "بوعنداس", dist: 65 },
+      { name: "بني ورتيلان", dist: 68 },
+      { name: "الولجة", dist: 70 },
+      { name: "واد البارد", dist: 70 },
+      { name: "بوسلام", dist: 70 },
+      { name: "عين لقراج", dist: 70 },
+      { name: "بيضاء برج", dist: 70 },
+      { name: "أولاد تبان", dist: 72 },
+      { name: "بني شبانة", dist: 73 },
+      { name: "بني حسين", dist: 75 },
+      { name: "بني موحلي", dist: 75 },
+      { name: "آيت نوال مزادة", dist: 80 },
+      { name: "آيت تيزي", dist: 80 }
+    ].sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+
+    // Populate Setif communes dropdown
+    const setifSelect = document.getElementById('f-setif-area');
+    let defaultSetifIdx = 0;
+    SETIF_COMMUNES.forEach((c, idx) => {
+      const opt = document.createElement('option');
+      opt.value = idx;
+      const calculatedPrice = 200 + c.dist * 15;
+      const roundedPrice = roundTo50(calculatedPrice);
+      opt.textContent = `${c.name} (${c.dist === 0 ? 'وسط المدينة' : `${c.dist} كلم`}) — ${roundedPrice} دج`;
+      setifSelect.appendChild(opt);
+      if (c.name === "سطيف") {
+        defaultSetifIdx = idx;
+      }
+    });
+    setifSelect.value = defaultSetifIdx;
 
     function onWilaya() {
       const idx = wilayaSelect.value;
@@ -3663,18 +3768,66 @@
       document.getElementById('f-address').required = false;
       document.getElementById('f-address').value = '';
       document.getElementById('f-address').classList.remove('valid', 'error');
+
+      // Hide Setif area selector by default and disable it
+      document.getElementById('setif-area-wrap').style.display = 'none';
+      document.getElementById('f-setif-area').disabled = true;
+      // Restore office delivery option display
+      document.getElementById('d-office').style.display = '';
+      document.querySelector('.del-grid').classList.remove('single-opt');
+
       checkForm();
       if (!idx) {
         document.getElementById('del-wrap').style.display = 'none';
         return;
       }
       curW = WILAYAS[idx];
+
+      // Setif specific logic
+      if (curW.n === "سطيف") {
+        // Remove office delivery
+        document.getElementById('d-office').style.display = 'none';
+        document.querySelector('.del-grid').classList.add('single-opt');
+
+        // Show and enable Setif area selector
+        document.getElementById('setif-area-wrap').style.display = 'block';
+        document.getElementById('f-setif-area').disabled = false;
+
+        // Reset Setif home delivery cost based on current area selection
+        const areaIdx = document.getElementById('f-setif-area').value;
+        if (areaIdx !== "") {
+          const c = SETIF_COMMUNES[areaIdx];
+          const rawPrice = 200 + c.dist * 15;
+          curW.h = roundTo50(rawPrice);
+        }
+      }
+
       document.getElementById('dh-delay').textContent = curW.d;
       document.getElementById('dh-cost').textContent = fmt(curW.h);
       document.getElementById('do-delay').textContent = curW.d;
       document.getElementById('do-cost').textContent = fmt(curW.o);
       document.getElementById('del-wrap').style.display = 'block';
       document.getElementById('hf-wilaya').value = curW.n;
+
+      if (curW.n === "سطيف") {
+        // Auto-select home delivery for Setif
+        pickDel('home');
+      }
+    }
+
+    function onSetifAreaChange() {
+      const areaIdx = document.getElementById('f-setif-area').value;
+      if (curW && curW.n === "سطيف" && areaIdx !== "") {
+        const c = SETIF_COMMUNES[areaIdx];
+        const rawPrice = 200 + c.dist * 15;
+        curW.h = roundTo50(rawPrice);
+        document.getElementById('dh-cost').textContent = fmt(curW.h);
+        if (curDel === 'home') {
+          delCost = curW.h;
+          updateSummary();
+        }
+      }
+      checkForm();
     }
 
     function pickDel(type) {
@@ -3717,9 +3870,21 @@
         unitPriceLabel = 1300;
       }
 
-      // Free delivery for 3 units or more
-      const isFreeDelivery = qty >= 3;
-      const actualDelCost = isFreeDelivery ? 0 : delCost;
+      // Check if selected location is a Setif commune other than the center city
+      const isSetifOtherCommune = (() => {
+        if (curW && curW.n === "سطيف") {
+          const areaIdx = document.getElementById('f-setif-area').value;
+          if (areaIdx !== "") {
+            const c = SETIF_COMMUNES[areaIdx];
+            return c && c.dist > 0;
+          }
+        }
+        return false;
+      })();
+
+      // Free delivery for 3 units or more (except for other communes in Setif where distance > 0)
+      const isFreeDelivery = qty >= 3 && !isSetifOtherCommune;
+      const actualDelCost = isFreeDelivery ? 0 : roundTo50(delCost);
       const grandTotal = prodTotal + (curDel ? actualDelCost : 0);
 
       // Update quantity meta text dynamically
@@ -3730,9 +3895,17 @@
         } else if (qty === 2) {
           qtyMeta.textContent = '2800 دج (عرض قطعتين)';
         } else if (qty === 3) {
-          qtyMeta.textContent = '3900 دج + شحن مجاني 🎁';
+          if (isSetifOtherCommune) {
+            qtyMeta.textContent = '3900 دج (عرض 3 قطع)';
+          } else {
+            qtyMeta.textContent = '3900 دج + شحن مجاني 🎁';
+          }
         } else {
-          qtyMeta.textContent = fmt(prodTotal) + ' + شحن مجاني 🎁';
+          if (isSetifOtherCommune) {
+            qtyMeta.textContent = fmt(prodTotal) + ' (عرض خاص)';
+          } else {
+            qtyMeta.textContent = fmt(prodTotal) + ' + شحن مجاني 🎁';
+          }
         }
       }
 
